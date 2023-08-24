@@ -31,8 +31,14 @@
 #define CORE_ID_FILENAME_FORMAT "/sys/devices/system/cpu/cpu%" PRIu32 "/topology/core_id"
 #define CORE_ID_FILESIZE 32
 
+#define CORE_CPUS_FILENAME_SIZE (sizeof("/sys/devices/system/cpu/cpu" STRINGIFY(UINT32_MAX) "/topology/core_cpus_list"))
+#define CORE_CPUS_FILENAME_FORMAT "/sys/devices/system/cpu/cpu%" PRIu32 "/topology/core_cpus_list"
 #define CORE_SIBLINGS_FILENAME_SIZE (sizeof("/sys/devices/system/cpu/cpu" STRINGIFY(UINT32_MAX) "/topology/core_siblings_list"))
 #define CORE_SIBLINGS_FILENAME_FORMAT "/sys/devices/system/cpu/cpu%" PRIu32 "/topology/core_siblings_list"
+#define CLUSTER_CPUS_FILENAME_SIZE (sizeof("/sys/devices/system/cpu/cpu" STRINGIFY(UINT32_MAX) "/topology/cluster_cpus_list"))
+#define CLUSTER_CPUS_FILENAME_FORMAT "/sys/devices/system/cpu/cpu%" PRIu32 "/topology/cluster_cpus_list"
+#define PACKAGE_CPUS_FILENAME_SIZE (sizeof("/sys/devices/system/cpu/cpu" STRINGIFY(UINT32_MAX) "/topology/package_cpus_list"))
+#define PACKAGE_CPUS_FILENAME_FORMAT "/sys/devices/system/cpu/cpu%" PRIu32 "/topology/package_cpus_list"
 #define THREAD_SIBLINGS_FILENAME_SIZE (sizeof("/sys/devices/system/cpu/cpu" STRINGIFY(UINT32_MAX) "/topology/thread_siblings_list"))
 #define THREAD_SIBLINGS_FILENAME_FORMAT "/sys/devices/system/cpu/cpu%" PRIu32 "/topology/thread_siblings_list"
 
@@ -340,6 +346,38 @@ static bool siblings_parser(uint32_t sibling_list_start, uint32_t sibling_list_e
 	return context->callback(processor, sibling_list_start, sibling_list_end, context->callback_context);
 }
 
+bool cpuinfo_linux_detect_core_cpus(
+	uint32_t max_processors_count,
+	uint32_t processor,
+	cpuinfo_siblings_callback callback,
+	void* context)
+{
+	char core_cpus_filename[CORE_CPUS_FILENAME_SIZE];
+	const int chars_formatted = snprintf(
+		core_cpus_filename, CORE_CPUS_FILENAME_SIZE, CORE_CPUS_FILENAME_FORMAT, processor);
+	if ((unsigned int) chars_formatted >= CORE_CPUS_FILENAME_SIZE) {
+		cpuinfo_log_warning("failed to format filename for core cpus of processor %"PRIu32, processor);
+		return false;
+	}
+
+	struct siblings_context siblings_context = {
+		.group_name = "cpus",
+		.max_processors_count = max_processors_count,
+		.processor = processor,
+		.callback = callback,
+		.callback_context = context,
+	};
+	if (cpuinfo_linux_parse_cpulist(core_cpus_filename,
+		(cpuinfo_cpulist_callback) siblings_parser, &siblings_context))
+	{
+		return true;
+	} else {
+		cpuinfo_log_info("failed to parse the list of core cpus for processor %"PRIu32" from %s",
+			processor, core_cpus_filename);
+		return false;
+	}
+}
+
 bool cpuinfo_linux_detect_core_siblings(
 	uint32_t max_processors_count,
 	uint32_t processor,
@@ -404,3 +442,66 @@ bool cpuinfo_linux_detect_thread_siblings(
 	}
 }
 
+bool cpuinfo_linux_detect_cluster_cpus(
+	uint32_t max_processors_count,
+	uint32_t processor,
+	cpuinfo_siblings_callback callback,
+	void* context)
+{
+	char cluster_cpus_filename[CLUSTER_CPUS_FILENAME_SIZE];
+	const int chars_formatted = snprintf(
+		cluster_cpus_filename, CLUSTER_CPUS_FILENAME_SIZE, CLUSTER_CPUS_FILENAME_FORMAT, processor);
+	if ((unsigned int) chars_formatted >= CLUSTER_CPUS_FILENAME_SIZE) {
+		cpuinfo_log_warning("failed to format filename for cluster cpus of processor %"PRIu32, processor);
+		return false;
+	}
+
+	struct siblings_context siblings_context = {
+		.group_name = "cluster",
+		.max_processors_count = max_processors_count,
+		.processor = processor,
+		.callback = callback,
+		.callback_context = context,
+	};
+	if (cpuinfo_linux_parse_cpulist(cluster_cpus_filename,
+		(cpuinfo_cpulist_callback) siblings_parser, &siblings_context))
+	{
+		return true;
+	} else {
+		cpuinfo_log_info("failed to parse the list of cluster cpus for processor %"PRIu32" from %s",
+			processor, cluster_cpus_filename);
+		return false;
+	}
+}
+
+bool cpuinfo_linux_detect_package_cpus(
+	uint32_t max_processors_count,
+	uint32_t processor,
+	cpuinfo_siblings_callback callback,
+	void* context)
+{
+	char package_cpus_filename[PACKAGE_CPUS_FILENAME_SIZE];
+	const int chars_formatted = snprintf(
+		package_cpus_filename, PACKAGE_CPUS_FILENAME_SIZE, PACKAGE_CPUS_FILENAME_FORMAT, processor);
+	if ((unsigned int) chars_formatted >= PACKAGE_CPUS_FILENAME_SIZE) {
+		cpuinfo_log_warning("failed to format filename for package cpus of processor %"PRIu32, processor);
+		return false;
+	}
+
+	struct siblings_context siblings_context = {
+		.group_name = "package",
+		.max_processors_count = max_processors_count,
+		.processor = processor,
+		.callback = callback,
+		.callback_context = context,
+	};
+	if (cpuinfo_linux_parse_cpulist(package_cpus_filename,
+		(cpuinfo_cpulist_callback) siblings_parser, &siblings_context))
+	{
+		return true;
+	} else {
+		cpuinfo_log_info("failed to parse the list of package cpus for processor %"PRIu32" from %s",
+			processor, package_cpus_filename);
+		return false;
+	}
+}

@@ -18,9 +18,10 @@
 #define CPUINFO_LINUX_FLAG_APIC_ID            UINT32_C(0x00000080)
 #define CPUINFO_LINUX_FLAG_SMT_CLUSTER        UINT32_C(0x00000100)
 #define CPUINFO_LINUX_FLAG_CORE_CLUSTER       UINT32_C(0x00000200)
-#define CPUINFO_LINUX_FLAG_PACKAGE_CLUSTER    UINT32_C(0x00000400)
-#define CPUINFO_LINUX_FLAG_PROC_CPUINFO       UINT32_C(0x00000800)
-#define CPUINFO_LINUX_FLAG_VALID              UINT32_C(0x00001000)
+#define CPUINFO_LINUX_FLAG_CLUSTER_CLUSTER    UINT32_C(0x00000400)
+#define CPUINFO_LINUX_FLAG_PACKAGE_CLUSTER    UINT32_C(0x00000800)
+#define CPUINFO_LINUX_FLAG_PROC_CPUINFO       UINT32_C(0x00001000)
+#define CPUINFO_LINUX_FLAG_VALID              UINT32_C(0x00002000)
 
 
 typedef bool (*cpuinfo_cpulist_callback)(uint32_t, uint32_t, void*);
@@ -50,6 +51,21 @@ CPUINFO_INTERNAL bool cpuinfo_linux_detect_core_siblings(
 	cpuinfo_siblings_callback callback,
 	void* context);
 CPUINFO_INTERNAL bool cpuinfo_linux_detect_thread_siblings(
+	uint32_t max_processors_count,
+	uint32_t processor,
+	cpuinfo_siblings_callback callback,
+	void* context);
+CPUINFO_INTERNAL bool cpuinfo_linux_detect_cluster_cpus(
+	uint32_t max_processors_count,
+	uint32_t processor,
+	cpuinfo_siblings_callback callback,
+	void* context);
+CPUINFO_INTERNAL bool cpuinfo_linux_detect_core_cpus(
+	uint32_t max_processors_count,
+	uint32_t processor,
+	cpuinfo_siblings_callback callback,
+	void* context);
+CPUINFO_INTERNAL bool cpuinfo_linux_detect_package_cpus(
 	uint32_t max_processors_count,
 	uint32_t processor,
 	cpuinfo_siblings_callback callback,
